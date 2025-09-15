@@ -216,6 +216,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import QuoteModal from '@/components/quotes/QuoteModal.vue'
+import { convex } from '@/lib/convex'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -226,6 +227,8 @@ import {
 const authStore = useAuthStore()
 
 const quotes = ref([])
+const isLoading = ref(false)
+const errorMessage = ref('')
 const customers = ref([])
 const searchTerm = ref('')
 const statusFilter = ref('')
@@ -274,31 +277,25 @@ const formatDate = (timestamp: number) => {
 
 const loadQuotes = async () => {
   try {
-    const response = await fetch('/api/quotes', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      quotes.value = await response.json()
-    }
+    if (!authStore.currentCompany?._id) return
+    isLoading.value = true
+    quotes.value = await convex.query('quotes:getQuotesByCompany', {
+      companyId: authStore.currentCompany._id,
+    } as any)
   } catch (error) {
     console.error('Failed to load quotes:', error)
+    errorMessage.value = 'Failed to load quotes.'
+  } finally {
+    isLoading.value = false
   }
 }
 
 const loadCustomers = async () => {
   try {
-    const response = await fetch('/api/customers', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      customers.value = await response.json()
-    }
+    if (!authStore.currentCompany?._id) return
+    customers.value = await convex.query('customers:getCustomers', {
+      companyId: authStore.currentCompany._id,
+    } as any)
   } catch (error) {
     console.error('Failed to load customers:', error)
   }
@@ -310,28 +307,27 @@ const editQuote = (quote: any) => {
 
 const duplicateQuote = async (quote: any) => {
   try {
-    const duplicateData = {
-      ...quote,
+    if (!authStore.currentCompany?._id) return
+    await convex.mutation('quotes:createQuote', {
+      companyId: authStore.currentCompany._id,
+      customerId: quote.customerId,
+      jobId: quote.jobId,
       title: `${quote.title} (Copy)`,
+      description: quote.description,
       status: 'draft',
-      quoteNumber: '', // Will be generated
-    }
-    delete duplicateData._id
-    delete duplicateData.createdAt
-    delete duplicateData.updatedAt
-
-    const response = await fetch('/api/quotes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(duplicateData)
-    })
-    
-    if (response.ok) {
-      await loadQuotes()
-    }
+      validUntil: quote.validUntil,
+      lineItems: quote.lineItems,
+      subtotal: quote.subtotal,
+      taxRate: quote.taxRate,
+      taxAmount: quote.taxAmount,
+      gstRate: quote.gstRate,
+      gstAmount: quote.gstAmount,
+      total: quote.total,
+      notes: quote.notes,
+      terms: quote.terms,
+      createdBy: authStore.currentUser?._id,
+    } as any)
+    await loadQuotes()
   } catch (error) {
     console.error('Failed to duplicate quote:', error)
   }
@@ -339,16 +335,24 @@ const duplicateQuote = async (quote: any) => {
 
 const sendQuote = async (quote: any) => {
   try {
-    const response = await fetch(`/api/quotes/${quote._id}/send`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      await loadQuotes()
+    // Update status to sent
+    await convex.mutation('quotes:updateQuote', {
+      quoteId: quote._id,
+      status: 'sent',
+      sentAt: Date.now(),
+    } as any)
+
+    // Send email using Convex action (Resend)
+    const customer = customers.value.find((c: any) => c._id === quote.customerId)
+    if (customer?.email) {
+      await convex.action('actions/email:sendEmail', {
+        to: customer.email,
+        subject: `Quote ${quote.quoteNumber} from TradeFlow`,
+        html: `<p>Hi ${customer.firstName},</p><p>Please find your quote <strong>${quote.quoteNumber}</strong> totaling <strong>$${quote.total.toFixed(2)}</strong>.</p>`
+      } as any)
     }
+
+    await loadQuotes()
   } catch (error) {
     console.error('Failed to send quote:', error)
   }
@@ -356,25 +360,21 @@ const sendQuote = async (quote: any) => {
 
 const handleSaveQuote = async (quoteData: any) => {
   try {
-    const url = editingQuote.value 
-      ? `/api/quotes/${editingQuote.value._id}`
-      : '/api/quotes'
-    
-    const method = editingQuote.value ? 'PATCH' : 'POST'
-    
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(quoteData)
-    })
-    
-    if (response.ok) {
-      await loadQuotes()
-      closeModal()
+    if (!authStore.currentCompany?._id) return
+    if (editingQuote.value) {
+      await convex.mutation('quotes:updateQuote', {
+        quoteId: editingQuote.value._id,
+        ...quoteData,
+      } as any)
+    } else {
+      await convex.mutation('quotes:createQuote', {
+        companyId: authStore.currentCompany._id,
+        ...quoteData,
+        createdBy: authStore.currentUser?._id,
+      } as any)
     }
+    await loadQuotes()
+    closeModal()
   } catch (error) {
     console.error('Failed to save quote:', error)
   }

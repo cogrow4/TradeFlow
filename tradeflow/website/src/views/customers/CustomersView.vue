@@ -224,6 +224,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { convex } from '@/lib/convex'
 import CustomerModal from '@/components/customers/CustomerModal.vue'
 import {
   PlusIcon,
@@ -289,15 +290,10 @@ const formatDate = (timestamp: number) => {
 
 const loadCustomers = async () => {
   try {
-    const response = await fetch('/api/customers', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      customers.value = await response.json()
-    }
+    if (!authStore.currentCompany?._id) return
+    customers.value = await convex.query('customers:getCustomers', {
+      companyId: authStore.currentCompany._id,
+    } as any)
   } catch (error) {
     console.error('Failed to load customers:', error)
   }
@@ -310,16 +306,8 @@ const editCustomer = (customer: any) => {
 const deleteCustomer = async (customer: any) => {
   if (confirm(`Are you sure you want to delete ${customer.firstName} ${customer.lastName}?`)) {
     try {
-      const response = await fetch(`/api/customers/${customer._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-        }
-      })
-      
-      if (response.ok) {
-        await loadCustomers()
-      }
+      await convex.mutation('customers:deleteCustomer', { customerId: customer._id })
+      await loadCustomers()
     } catch (error) {
       console.error('Failed to delete customer:', error)
     }
@@ -328,25 +316,20 @@ const deleteCustomer = async (customer: any) => {
 
 const handleSaveCustomer = async (customerData: any) => {
   try {
-    const url = editingCustomer.value 
-      ? `/api/customers/${editingCustomer.value._id}`
-      : '/api/customers'
-    
-    const method = editingCustomer.value ? 'PATCH' : 'POST'
-    
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(customerData)
-    })
-    
-    if (response.ok) {
-      await loadCustomers()
-      closeModal()
+    if (!authStore.currentCompany?._id) return
+    if (editingCustomer.value) {
+      await convex.mutation('customers:updateCustomer', {
+        customerId: editingCustomer.value._id,
+        ...customerData,
+      } as any)
+    } else {
+      await convex.mutation('customers:createCustomer', {
+        companyId: authStore.currentCompany._id,
+        ...customerData,
+      } as any)
     }
+    await loadCustomers()
+    closeModal()
   } catch (error) {
     console.error('Failed to save customer:', error)
   }

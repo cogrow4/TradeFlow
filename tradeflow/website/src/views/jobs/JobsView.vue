@@ -244,6 +244,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { convex } from '@/lib/convex'
 import JobModal from '@/components/jobs/JobModal.vue'
 import JobStatusModal from '@/components/jobs/JobStatusModal.vue'
 import {
@@ -326,15 +327,10 @@ const formatDate = (timestamp: number) => {
 
 const loadJobs = async () => {
   try {
-    const response = await fetch('/api/jobs', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      jobs.value = await response.json()
-    }
+    if (!authStore.currentCompany?._id) return
+    jobs.value = await convex.query('jobs:getJobs', {
+      companyId: authStore.currentCompany._id,
+    } as any)
   } catch (error) {
     console.error('Failed to load jobs:', error)
   }
@@ -342,15 +338,8 @@ const loadJobs = async () => {
 
 const loadTeamMembers = async () => {
   try {
-    const response = await fetch('/api/users/team', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      teamMembers.value = await response.json()
-    }
+    if (!authStore.currentCompany?._id) return
+    teamMembers.value = await convex.query('companies:getCompany', { companyId: authStore.currentCompany._id } as any)
   } catch (error) {
     console.error('Failed to load team members:', error)
   }
@@ -366,25 +355,31 @@ const updateJobStatus = (job: any) => {
 
 const handleSaveJob = async (jobData: any) => {
   try {
-    const url = editingJob.value 
-      ? `/api/jobs/${editingJob.value._id}`
-      : '/api/jobs'
-    
-    const method = editingJob.value ? 'PATCH' : 'POST'
-    
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(jobData)
-    })
-    
-    if (response.ok) {
-      await loadJobs()
-      closeModal()
+    if (!authStore.currentCompany?._id) return
+    if (editingJob.value) {
+      await convex.mutation('jobs:updateJob', {
+        jobId: editingJob.value._id,
+        ...jobData,
+      } as any)
+    } else {
+      await convex.mutation('jobs:createJob', {
+        companyId: authStore.currentCompany._id,
+        customerId: jobData.customerId,
+        title: jobData.title,
+        description: jobData.description,
+        jobType: jobData.jobType,
+        priority: jobData.priority,
+        location: jobData.location,
+        assignedTo: jobData.assignedTo || undefined,
+        teamMembers: jobData.teamMembers || [],
+        scheduledStart: jobData.scheduledStart,
+        scheduledEnd: jobData.scheduledEnd,
+        estimatedHours: jobData.estimatedHours,
+        notes: jobData.notes || undefined,
+      } as any)
     }
+    await loadJobs()
+    closeModal()
   } catch (error) {
     console.error('Failed to save job:', error)
   }
@@ -392,19 +387,13 @@ const handleSaveJob = async (jobData: any) => {
 
 const handleStatusUpdate = async (jobId: string, status: string, notes?: string) => {
   try {
-    const response = await fetch(`/api/jobs/${jobId}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify({ status, completionNotes: notes })
-    })
-    
-    if (response.ok) {
-      await loadJobs()
-      closeStatusModal()
-    }
+    await convex.mutation('jobs:updateJobStatus', {
+      jobId,
+      status: status as any,
+      completionNotes: notes,
+    } as any)
+    await loadJobs()
+    closeStatusModal()
   } catch (error) {
     console.error('Failed to update job status:', error)
   }

@@ -1,0 +1,16 @@
+node_modules/
+.dist/
+dist/
+.env
+.env.*
+**/.DS_Store
+**/.idea
+**/.vscode
+coverage/
+.tmp/
+.svelte-kit/
+.gradle/
+.build/
+/android/
+ios/
+convex/.deployment.json

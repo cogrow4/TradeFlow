@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useClerk } from '@clerk/vue'
+import { convex } from '@/lib/convex'
 
 export const useAuthStore = defineStore('auth', () => {
   const { user, isLoaded, isSignedIn } = useClerk()
@@ -28,20 +29,23 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value) return
 
     try {
-      // Load user from Convex
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'Authorization': `Bearer ${await user.value.getToken()}`
+      // Ensure user exists in Convex and fetch profile
+      const upsertedUserId = await convex.mutation(
+        'users:createOrUpdateUser',
+        {
+          clerkId: user.value.id,
+          email: user.value.primaryEmailAddress?.emailAddress || '',
+          firstName: user.value.firstName || '',
+          lastName: user.value.lastName || '',
+          profileImage: user.value.imageUrl || undefined,
         }
-      })
-      
-      if (response.ok) {
-        const userData = await response.json()
-        currentUser.value = userData
-        
-        if (userData.companyId) {
-          await loadCompanyData(userData.companyId)
-        }
+      )
+
+      const profile = await convex.query('users:getUserByClerkId', { clerkId: user.value.id })
+      currentUser.value = profile
+
+      if (profile?.companyId) {
+        await loadCompanyData(profile.companyId)
       }
     } catch (error) {
       console.error('Failed to load user data:', error)
@@ -50,15 +54,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loadCompanyData = async (companyId: string) => {
     try {
-      const response = await fetch(`/api/companies/${companyId}`, {
-        headers: {
-          'Authorization': `Bearer ${await user.value?.getToken()}`
-        }
-      })
-      
-      if (response.ok) {
-        currentCompany.value = await response.json()
-      }
+      const company = await convex.query('companies:getCompany', { companyId } as any)
+      currentCompany.value = company
     } catch (error) {
       console.error('Failed to load company data:', error)
     }
@@ -81,18 +78,11 @@ export const useAuthStore = defineStore('auth', () => {
     if (!currentUser.value) return
 
     try {
-      const response = await fetch(`/api/users/${currentUser.value._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user.value?.getToken()}`
-        },
-        body: JSON.stringify(updates)
+      await convex.mutation('users:updateUserProfile', {
+        userId: currentUser.value._id,
+        ...updates,
       })
-
-      if (response.ok) {
-        currentUser.value = { ...currentUser.value, ...updates }
-      }
+      currentUser.value = { ...currentUser.value, ...updates }
     } catch (error) {
       console.error('Failed to update profile:', error)
     }

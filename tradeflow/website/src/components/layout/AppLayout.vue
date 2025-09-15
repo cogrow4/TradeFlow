@@ -90,6 +90,16 @@
               </span>
             </button>
 
+            <!-- Clerk header -->
+            <div class="hidden sm:block">
+              <SignedOut>
+                <SignInButton />
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </div>
+
             <!-- User menu -->
             <div class="relative">
               <button
@@ -159,6 +169,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/vue'
 import {
   HomeIcon,
   UsersIcon,

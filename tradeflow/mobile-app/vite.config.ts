@@ -1,18 +1,35 @@
-import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
+import { fileURLToPath, URL } from 'node:url'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    vueDevTools(),
-  ],
+  plugins: [vue()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
+  server: {
+    port: 5174,
+    host: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          clerk: ['@clerk/vue'],
+          convex: ['convex'],
+          capacitor: ['@capacitor/core', '@capacitor/camera', '@capacitor/geolocation'],
+          ui: ['@headlessui/vue', '@heroicons/vue']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', '@clerk/vue', 'convex', '@capacitor/core']
+  }
 })

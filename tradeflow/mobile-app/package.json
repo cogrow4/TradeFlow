@@ -1,6 +1,7 @@
 {
-  "name": "mobile-app",
-  "version": "0.0.0",
+  "name": "tradeflow-mobile",
+  "version": "1.0.0",
+  "description": "TradeFlow - Professional trade business management platform (Mobile)",
   "private": true,
   "type": "module",
   "engines": {

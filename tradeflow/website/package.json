@@ -1,6 +1,7 @@
 {
-  "name": "website",
-  "version": "0.0.0",
+  "name": "tradeflow-website",
+  "version": "1.0.0",
+  "description": "TradeFlow - Professional trade business management platform (Web)",
   "private": true,
   "type": "module",
   "engines": {
@@ -19,6 +20,7 @@
   "dependencies": {
     "@clerk/vue": "^1.13.1",
     "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.2.0",
     "@vueuse/core": "^13.9.0",
     "@vueuse/head": "^2.0.0",
     "convex": "^1.27.0",

@@ -1,389 +1,215 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between">
-      <div class="min-w-0 flex-1">
+    <div class="flex items-center justify-between">
+      <div>
         <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
           Inventory
         </h2>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Manage your parts, materials, and equipment inventory.
+          Manage your inventory and track stock levels
         </p>
       </div>
-      <div class="mt-4 flex md:ml-4 md:mt-0 space-x-3">
-        <button
-          type="button"
-          class="btn-secondary"
-          @click="exportInventory"
-        >
+      <div class="flex space-x-3">
+        <button type="button" class="btn-secondary" @click="exportInventory">
           <ArrowDownTrayIcon class="h-4 w-4 mr-2" />
           Export
         </button>
-        <button
-          type="button"
-          class="btn-secondary"
-          @click="showReorderModal = true"
-        >
-          <ExclamationTriangleIcon class="h-4 w-4 mr-2" />
-          Reorder Alert
-        </button>
-        <button
-          type="button"
-          class="btn-primary"
-          @click="showCreateModal = true"
-        >
+        <button type="button" class="btn-primary" @click="showCreateModal = true">
           <PlusIcon class="h-4 w-4 mr-2" />
           Add Item
         </button>
       </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="card p-6">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-              <CubeIcon class="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Total Items
-              </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-white">
-                {{ stats.totalItems }}
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-
-      <div class="card p-6">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-              <ExclamationTriangleIcon class="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Low Stock
-              </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-white">
-                {{ stats.lowStockItems }}
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-
-      <div class="card p-6">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-              <CurrencyDollarIcon class="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Total Value
-              </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-white">
-                ${{ stats.totalValue.toLocaleString() }}
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-
-      <div class="card p-6">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-              <TruckIcon class="w-5 h-5 text-white" />
-            </div>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Suppliers
-              </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-white">
-                {{ stats.totalSuppliers }}
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filters and Search -->
-    <div class="card p-6">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <!-- Filters -->
+    <div class="card p-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Search inventory
-          </label>
+          <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
           <div class="mt-1 relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
-            </div>
             <input
+              type="text"
               id="search"
               v-model="searchTerm"
-              type="text"
-              placeholder="Search by name, SKU, or barcode..."
               class="input-field pl-10"
+              placeholder="Search inventory..."
             />
+            <MagnifyingGlassIcon class="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
         <div>
-          <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Category
-          </label>
-          <select
-            id="category"
-            v-model="categoryFilter"
-            class="input-field mt-1"
-          >
+          <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+          <select id="category" v-model="categoryFilter" class="input-field mt-1">
             <option value="">All Categories</option>
-            <option v-for="category in categories" :key="category" :value="category">
-              {{ category }}
-            </option>
+            <option value="electrical">Electrical</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="hvac">HVAC</option>
+            <option value="tools">Tools</option>
+            <option value="safety">Safety</option>
+            <option value="other">Other</option>
           </select>
         </div>
-        <div>
-          <label for="supplier" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Supplier
-          </label>
-          <select
-            id="supplier"
-            v-model="supplierFilter"
-            class="input-field mt-1"
-          >
-            <option value="">All Suppliers</option>
-            <option v-for="supplier in suppliers" :key="supplier._id" :value="supplier._id">
-              {{ supplier.name }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label for="stockStatus" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Stock Status
-          </label>
-          <select
-            id="stockStatus"
-            v-model="stockStatusFilter"
-            class="input-field mt-1"
-          >
-            <option value="">All Items</option>
-            <option value="in_stock">In Stock</option>
-            <option value="low_stock">Low Stock</option>
-            <option value="out_of_stock">Out of Stock</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Inventory Table -->
-    <div class="card overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead class="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Item
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                SKU
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Category
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Stock
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Cost Price
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Selling Price
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Supplier
-              </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr
-              v-for="item in filteredInventory"
-              :key="item._id"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div>
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">
-                    {{ item.name }}
-                  </div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                    {{ item.description }}
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ item.sku }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                  {{ item.category }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <span class="text-sm text-gray-900 dark:text-white mr-2">
-                    {{ item.currentStock }} {{ item.unit }}
-                  </span>
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                    :class="getStockStatusColor(item)"
-                  >
-                    {{ getStockStatus(item) }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                ${{ item.costPrice.toFixed(2) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                ${{ item.sellingPrice.toFixed(2) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {{ item.supplier?.name || 'No supplier' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex justify-end space-x-2">
-                  <button
-                    @click="editItem(item)"
-                    class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="adjustStock(item)"
-                    class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                  >
-                    Adjust
-                  </button>
-                  <button
-                    @click="deleteItem(item)"
-                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Empty state -->
-      <div v-if="filteredInventory.length === 0" class="text-center py-12">
-        <CubeIcon class="mx-auto h-12 w-12 text-gray-400" />
-        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No inventory items found</h3>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Get started by adding your first inventory item.
-        </p>
-        <div class="mt-6">
-          <button
-            type="button"
-            class="btn-primary"
-            @click="showCreateModal = true"
-          >
-            <PlusIcon class="h-4 w-4 mr-2" />
-            Add Item
+        <div class="flex items-end">
+          <button type="button" class="btn-secondary w-full" @click="clearFilters">
+            Clear Filters
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Item Modal -->
+    <!-- Low Stock Alert -->
+    <div v-if="lowStockItems.length > 0" class="card p-4 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" />
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            Low Stock Alert
+          </h3>
+          <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+            <p>{{ lowStockItems.length }} item(s) are running low on stock.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex justify-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="card p-6">
+      <div class="text-center">
+        <p class="text-red-600 dark:text-red-400">Error loading inventory: {{ error }}</p>
+        <button type="button" class="btn-primary mt-4" @click="loadInventory">
+          Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Inventory Grid -->
+    <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div
+        v-for="item in filteredInventory"
+        :key="item._id"
+        class="card p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ item.name }}</h3>
+            <p v-if="item.sku" class="text-sm text-gray-500 dark:text-gray-400">SKU: {{ item.sku }}</p>
+            <p v-if="item.description" class="text-sm text-gray-600 dark:text-gray-300 mt-1">{{ item.description }}</p>
+          </div>
+          <div class="ml-4 flex-shrink-0">
+            <span
+              :class="getStockStatusColor(item.currentStock, item.minStockLevel)"
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+            >
+              {{ item.currentStock }} in stock
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Unit Cost:</span>
+            <span class="text-gray-900 dark:text-white">${{ item.unitCost.toFixed(2) }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Selling Price:</span>
+            <span class="text-gray-900 dark:text-white">${{ item.sellingPrice.toFixed(2) }}</span>
+          </div>
+          <div v-if="item.category" class="flex justify-between text-sm">
+            <span class="text-gray-500 dark:text-gray-400">Category:</span>
+            <span class="text-gray-900 dark:text-white capitalize">{{ item.category }}</span>
+          </div>
+        </div>
+
+        <div class="mt-4 flex space-x-2">
+          <button
+            type="button"
+            class="flex-1 btn-secondary text-sm"
+            @click="editItem(item)"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            class="flex-1 btn-primary text-sm"
+            @click="adjustStock(item)"
+          >
+            Adjust Stock
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-if="filteredInventory.length === 0" class="text-center py-12">
+      <CubeIcon class="mx-auto h-12 w-12 text-gray-400" />
+      <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No inventory items found</h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Get started by adding your first inventory item.
+      </p>
+      <div class="mt-6">
+        <button type="button" class="btn-primary" @click="showCreateModal = true">
+          <PlusIcon class="h-4 w-4 mr-2" />
+          Add Item
+        </button>
+      </div>
+    </div>
+
+    <!-- Inventory Item Modal -->
     <InventoryItemModal
       v-if="showCreateModal || editingItem"
       :item="editingItem"
-      @close="closeModal"
       @save="handleSaveItem"
-    />
-
-    <!-- Stock Adjustment Modal -->
-    <StockAdjustmentModal
-      v-if="adjustingItem"
-      :item="adjustingItem"
-      @close="closeAdjustmentModal"
-      @adjust="handleStockAdjustment"
-    />
-
-    <!-- Reorder Alert Modal -->
-    <ReorderAlertModal
-      v-if="showReorderModal"
-      @close="showReorderModal = false"
+      @close="closeModal"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import InventoryItemModal from '@/components/inventory/InventoryItemModal.vue'
-import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal.vue'
-import ReorderAlertModal from '@/components/inventory/ReorderAlertModal.vue'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   ArrowDownTrayIcon,
-  ExclamationTriangleIcon,
   CubeIcon,
-  CurrencyDollarIcon,
-  TruckIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
+import { useQuery, useMutation } from '@/lib/mock-convex'
+import { api } from '@/lib/convex'
 
 const authStore = useAuthStore()
 
-const inventory = ref([])
-const suppliers = ref([])
-const categories = ref([])
 const searchTerm = ref('')
 const categoryFilter = ref('')
-const supplierFilter = ref('')
-const stockStatusFilter = ref('')
 const showCreateModal = ref(false)
 const editingItem = ref(null)
-const adjustingItem = ref(null)
-const showReorderModal = ref(false)
 
-const stats = ref({
-  totalItems: 0,
-  lowStockItems: 0,
-  totalValue: 0,
-  totalSuppliers: 0
-})
+// Convex integration
+const { data: inventory, isLoading, error, refetch: refetchInventory } = useQuery(
+  api.inventory.getInventory,
+  () => ({ companyId: authStore.currentCompany?._id }),
+  { enabled: computed(() => !!authStore.currentCompany?._id) }
+)
+const createItemMutation = useMutation(api.inventory.createInventoryItem)
+const updateItemMutation = useMutation(api.inventory.updateInventoryItem)
 
 const filteredInventory = computed(() => {
+  if (!inventory.value) return []
   let filtered = inventory.value
 
   if (searchTerm.value) {
     const search = searchTerm.value.toLowerCase()
     filtered = filtered.filter(item =>
       item.name.toLowerCase().includes(search) ||
-      item.sku.toLowerCase().includes(search) ||
-      item.barcode?.toLowerCase().includes(search) ||
+      item.sku?.toLowerCase().includes(search) ||
       item.description?.toLowerCase().includes(search)
     )
   }
@@ -392,79 +218,21 @@ const filteredInventory = computed(() => {
     filtered = filtered.filter(item => item.category === categoryFilter.value)
   }
 
-  if (supplierFilter.value) {
-    filtered = filtered.filter(item => item.supplierId === supplierFilter.value)
-  }
-
-  if (stockStatusFilter.value) {
-    filtered = filtered.filter(item => {
-      const status = getStockStatus(item)
-      return status.toLowerCase().replace(' ', '_') === stockStatusFilter.value
-    })
-  }
-
   return filtered
 })
 
-const getStockStatus = (item: any) => {
-  if (item.currentStock <= 0) return 'Out of Stock'
-  if (item.currentStock <= item.reorderPoint) return 'Low Stock'
-  return 'In Stock'
-}
+const lowStockItems = computed(() => {
+  if (!inventory.value) return []
+  return inventory.value.filter(item => 
+    item.minStockLevel && item.currentStock <= item.minStockLevel
+  )
+})
 
-const getStockStatusColor = (item: any) => {
-  const status = getStockStatus(item)
-  const colors = {
-    'In Stock': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'Low Stock': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    'Out of Stock': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  }
-  return colors[status] || colors['In Stock']
-}
-
-const loadInventory = async () => {
-  try {
-    const response = await fetch('/api/inventory', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      inventory.value = await response.json()
-      updateStats()
-    }
-  } catch (error) {
-    console.error('Failed to load inventory:', error)
-  }
-}
-
-const loadSuppliers = async () => {
-  try {
-    const response = await fetch('/api/suppliers', {
-      headers: {
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      }
-    })
-    
-    if (response.ok) {
-      suppliers.value = await response.json()
-    }
-  } catch (error) {
-    console.error('Failed to load suppliers:', error)
-  }
-}
-
-const updateStats = () => {
-  stats.value = {
-    totalItems: inventory.value.length,
-    lowStockItems: inventory.value.filter(item => item.currentStock <= item.reorderPoint).length,
-    totalValue: inventory.value.reduce((sum, item) => sum + (item.currentStock * item.costPrice), 0),
-    totalSuppliers: suppliers.value.length
-  }
-
-  // Extract unique categories
-  categories.value = [...new Set(inventory.value.map(item => item.category))]
+const getStockStatusColor = (currentStock: number, minStockLevel?: number) => {
+  if (!minStockLevel) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+  if (currentStock <= minStockLevel) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+  if (currentStock <= minStockLevel * 2) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
 }
 
 const editItem = (item: any) => {
@@ -472,71 +240,26 @@ const editItem = (item: any) => {
 }
 
 const adjustStock = (item: any) => {
-  adjustingItem.value = item
-}
-
-const deleteItem = async (item: any) => {
-  if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-    try {
-      const response = await fetch(`/api/inventory/${item._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-        }
-      })
-      
-      if (response.ok) {
-        await loadInventory()
-      }
-    } catch (error) {
-      console.error('Failed to delete item:', error)
-    }
-  }
+  // This would open a stock adjustment modal
+  console.log('Adjust stock for:', item)
 }
 
 const handleSaveItem = async (itemData: any) => {
   try {
-    const url = editingItem.value 
-      ? `/api/inventory/${editingItem.value._id}`
-      : '/api/inventory'
-    
-    const method = editingItem.value ? 'PATCH' : 'POST'
-    
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(itemData)
-    })
-    
-    if (response.ok) {
-      await loadInventory()
-      closeModal()
+    if (!authStore.currentCompany?._id) {
+      console.error('No company ID found for the current user.')
+      return
     }
-  } catch (error) {
-    console.error('Failed to save item:', error)
-  }
-}
 
-const handleStockAdjustment = async (itemId: string, adjustment: any) => {
-  try {
-    const response = await fetch(`/api/inventory/${itemId}/adjust`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await authStore.currentUser?.getToken()}`
-      },
-      body: JSON.stringify(adjustment)
-    })
-    
-    if (response.ok) {
-      await loadInventory()
-      closeAdjustmentModal()
+    if (editingItem.value) {
+      await updateItemMutation.value.mutate({ itemId: editingItem.value._id, ...itemData })
+    } else {
+      await createItemMutation.value.mutate({ companyId: authStore.currentCompany._id, ...itemData })
     }
+    refetchInventory()
+    closeModal()
   } catch (error) {
-    console.error('Failed to adjust stock:', error)
+    console.error('Failed to save inventory item:', error)
   }
 }
 
@@ -545,8 +268,9 @@ const closeModal = () => {
   editingItem.value = null
 }
 
-const closeAdjustmentModal = () => {
-  adjustingItem.value = null
+const clearFilters = () => {
+  searchTerm.value = ''
+  categoryFilter.value = ''
 }
 
 const exportInventory = () => {
@@ -555,18 +279,17 @@ const exportInventory = () => {
 }
 
 const generateCSV = (data: any[]) => {
-  const headers = ['Name', 'SKU', 'Category', 'Current Stock', 'Cost Price', 'Selling Price', 'Supplier', 'Status']
+  const headers = ['Name', 'SKU', 'Category', 'Current Stock', 'Min Stock Level', 'Unit Cost', 'Selling Price']
   const rows = data.map(item => [
     item.name,
-    item.sku,
-    item.category,
+    item.sku || '',
+    item.category || '',
     item.currentStock,
-    item.costPrice,
+    item.minStockLevel || '',
+    item.unitCost,
     item.sellingPrice,
-    item.supplier?.name || 'No supplier',
-    getStockStatus(item)
   ])
-  
+
   return [headers, ...rows].map(row => row.join(',')).join('\n')
 }
 
@@ -580,8 +303,7 @@ const downloadCSV = (content: string, filename: string) => {
   window.URL.revokeObjectURL(url)
 }
 
-onMounted(() => {
-  loadInventory()
-  loadSuppliers()
-})
+const loadInventory = () => {
+  refetchInventory()
+}
 </script>

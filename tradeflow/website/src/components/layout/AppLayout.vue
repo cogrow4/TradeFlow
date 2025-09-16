@@ -11,7 +11,7 @@
           <span class="ml-2 text-xl font-semibold text-gray-900 dark:text-white">TradeFlow</span>
         </div>
         <button @click="toggleSidebar" class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <XIcon class="w-5 h-5" />
+          <XMarkIcon class="w-5 h-5" />
         </button>
       </div>
 
@@ -67,7 +67,7 @@
       <!-- Top navigation -->
       <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 dark:bg-gray-800 dark:border-gray-700">
         <button @click="toggleSidebar" class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-          <MenuIcon class="w-5 h-5" />
+          <Bars3Icon class="w-5 h-5" />
         </button>
 
         <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -182,8 +182,8 @@ import {
   ChatBubbleLeftRightIcon,
   DocumentIcon,
   BellIcon,
-  MenuIcon,
-  XIcon,
+  Bars3Icon,
+  XMarkIcon,
   ChevronDownIcon,
   SunIcon,
   MoonIcon,

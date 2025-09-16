@@ -1,0 +1,25 @@
+{
+  "name": "tradeflow-backend",
+  "version": "1.0.0",
+  "description": "TradeFlow - Backend API and database functions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "build": "convex build",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "convex": "^1.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.5",
+    "eslint": "^9.31.0",
+    "prettier": "3.6.2",
+    "typescript": "~5.8.0",
+    "vitest": "^3.2.4"
+  }
+}
